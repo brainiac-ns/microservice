@@ -1,7 +1,9 @@
+import datetime
 import logging
 import os
 
 import boto3
+import pytz
 
 logging.basicConfig(level=logging.INFO)
 
@@ -22,6 +24,7 @@ class S3FileDownloader:
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         )
+        self.timezone = pytz.timezone("America/New_York")
 
     def download_file(self, s3_key: str):
         """
@@ -30,14 +33,38 @@ class S3FileDownloader:
         Args:
             s3_key (str): Key of the file in S3
         """
+        response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix="scripts")
+
         if not os.path.exists(self.local_folder):
             os.mkdir(self.local_folder)
 
-        # TODO: Modifikovati tako da skida fajl samo ukoliko fajl u s3 promenjen u odnosu na lokalni
-        try:
-            self.s3.download_file(
-                self.bucket_name, s3_key, f"{self.local_folder}/{s3_key.split('/')[-1]}"
-            )
-            logging.info(f"File {s3_key} downloaded from S3")
-        except Exception as e:
-            logging.exception(e)
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                if s3_key in obj["Key"]:
+                    s3_file_last_modified = obj["LastModified"]
+
+        for file_name in os.listdir(self.local_folder):
+            if s3_key in file_name:
+                file_path = os.path.join(self.local_folder, file_name)
+                last_modified_time = datetime.datetime.fromtimestamp(
+                    os.path.getmtime(file_path)
+                )
+                local_file_last_modified = last_modified_time
+
+        if not local_file_last_modified or local_file_last_modified.astimezone(
+            self.timezone
+        ) < s3_file_last_modified.astimezone(self.timezone):
+            try:
+                self.s3.download_file(
+                    self.bucket_name,
+                    s3_key,
+                    f"{self.local_folder}/{s3_key.split('/')[-1]}",
+                )
+                logging.info(f"File {s3_key} downloaded from S3")
+            except Exception as e:
+                logging.exception(e)
+
+
+if __name__ == "__main__":
+    a = S3FileDownloader(bucket_name="mlops-task", local_folder="data/scripts")
+    a.download_file("script_1.py")

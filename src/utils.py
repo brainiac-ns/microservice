@@ -21,7 +21,6 @@ def import_script_module(script_path: str) -> ModuleType:
     return module
 
 
-# TODO: Unit test
 def read_yaml_file(file_path: str) -> Dict:
     """
     Read and parse a YAML file.

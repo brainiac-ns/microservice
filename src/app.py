@@ -21,9 +21,6 @@ S3_FILE_DOWNLOADER = S3FileDownloader(
 )
 
 
-# TODO: Test integracioni
-# TODO: Koji bi queue ovde koristio?
-# TODO: Nacrtati dijagram kako sve ovo komunicira (cicd + microservice)
 @app.post("/execute_script")
 def execute_script(data: ScriptData) -> dict:
     """

@@ -1,17 +1,24 @@
 import unittest
-
+from unittest import mock
 from app import execute_script
+from fastapi import status
+import json
+from models.script_data import ScriptData
 
 
 class TestWholePipeline(unittest.TestCase):
-    def setUp(self) -> None:
-        return super().setUp()
+    @mock.patch("app.CONFIG", {"script_path": "tests/integration/test_data"})
+    @mock.patch("s3_manipulator.S3FileDownloader.download_file")
+    def test_execute_script_module(self, mock_download_file):
+        mock_download_file.return_value = None
 
-    def test_import_script_module(self):
-        execute_script("")
+        data = ScriptData(input_data=1, script_name="script.py")
 
-    def tearDown(self) -> None:
-        return super().tearDown()
+        response = execute_script(data)
+        content = json.loads(response.body.decode("utf-8"))
+
+        self.assertEqual(content["output"], "11")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 if __name__ == "__main__":
