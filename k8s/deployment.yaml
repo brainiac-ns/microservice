@@ -14,16 +14,12 @@ spec:
     spec:
       containers:
         - name: mlops-container
-          image: username/repository:tag
+          image: public.ecr.aws/s7q1z8i2/mlops-repo:latest
           ports:
             - containerPort: 8000
-      autoscaling:
-        metrics:
-          - type: Resource
-            resource:
-              name: cpu
-              target:
-                type: Utilization
-                averageUtilization: 50
-        minReplicas: 1
-        maxReplicas: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 500Mi
+
+# kubectl autoscale deployment mlops-deployment --cpu-percent=50 --min=1 --max=10 for HPA
