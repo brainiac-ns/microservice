@@ -15,7 +15,6 @@ app = FastAPI()
 
 S3_FILE_DOWNLOADER = S3FileDownloader(
     bucket_name=os.getenv("BUCKET_NAME", default="mlops-task"),
-    local_path=os.getenv("LOCAL_FILES", default="../automated-cicd"),
 )
 
 

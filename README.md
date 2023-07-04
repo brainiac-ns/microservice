@@ -4,7 +4,7 @@ Python microservice using REST architecture
 ## Running with Docker
 ```shell
 docker build -t microservice .
-docker run -p 8000:8000 -e AWS_ACCESS_KEY_ID=_aws_key_ -e AWS_SECRET_ACCESS_KEY=_aws_secret_ -e LOCAL_FILES=_path_to_files_ -v PATH_TO_LOCAL_FILES:/app/local_files microservice
+docker run -p 8000:8000 -e AWS_ACCESS_KEY_ID=_aws_key_ -e AWS_SECRET_ACCESS_KEY=_aws_secret_ microservice
 ```
 
 ## Running without Docker

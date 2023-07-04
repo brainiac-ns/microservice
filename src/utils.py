@@ -2,7 +2,6 @@ import importlib.util
 from types import ModuleType
 
 
-# TODO: test unit
 def import_script_module(script_path: str) -> ModuleType:
     """
     Import the script as a module
