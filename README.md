@@ -13,6 +13,13 @@ cd src
 AWS_ACCESS_KEY_ID=_aws_key_ AWS_SECRET_ACCESS_KEY=_aws_secret_ python app.py
 ```
 
+## Running with Kubernetes
+In k8s folder there are simple deployment and service files that can be used to launch k8s deployment. 
+Additionally, we can run for HPA:
+```shell
+kubectl autoscale deployment mlops-deployment --cpu-percent=50 --min=1 --max=10
+```
+
 ### QUESTION 3.: Describe how you would autoscale the microservice described at the point (1) [microservice] in a Kubernetes cluster:
 a. Which Kubernetes object would you use?
 
