@@ -6,7 +6,6 @@ import boto3
 logging.basicConfig(level=logging.INFO)
 
 
-# TODO: Testovi
 class S3FileDownloader:
     """S3 file downloader"""
 
@@ -37,19 +36,5 @@ class S3FileDownloader:
         try:
             self.s3.download_file(self.bucket_name, s3_key, s3_key)
             logging.info(f"File {s3_key} downloaded from S3")
-        except Exception:
-            self.copy_from_local_path(s3_key)
-
-    def copy_from_local_path(self, s3_key: str):
-        """
-        Copy a file from the local path
-
-        Args:
-            s3_key (str): Key of the file in S3
-        """
-        try:
-            logging.info(f"Copying file  {self.local_path}/{s3_key} from local path")
-            os.system(f"cp {self.local_path}/{s3_key} {s3_key}")
         except Exception as e:
             logging.exception(e)
-            logging.warn("File does not exist in local path")
