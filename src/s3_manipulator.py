@@ -33,7 +33,7 @@ class S3FileDownloader:
         Args:
             s3_key (str): Key of the file in S3
         """
-        response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix="scripts")
+        response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix=s3_key)
 
         if not os.path.exists(self.local_folder):
             os.mkdir(self.local_folder)
@@ -43,13 +43,14 @@ class S3FileDownloader:
                 if s3_key in obj["Key"]:
                     s3_file_last_modified = obj["LastModified"]
 
-        for file_name in os.listdir(self.local_folder):
-            if s3_key in file_name:
-                file_path = os.path.join(self.local_folder, file_name)
-                last_modified_time = datetime.datetime.fromtimestamp(
-                    os.path.getmtime(file_path)
-                )
-                local_file_last_modified = last_modified_time
+        file_path = os.path.join(self.local_folder, s3_key.split("/")[-1])
+
+        if os.path.exists(file_path):
+            local_file_last_modified = datetime.datetime.fromtimestamp(
+                os.path.getmtime(file_path)
+            )
+        else:
+            local_file_last_modified = ""
 
         if not local_file_last_modified or local_file_last_modified.astimezone(
             self.timezone
