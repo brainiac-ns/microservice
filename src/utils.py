@@ -1,8 +1,10 @@
 import importlib.util
 from types import ModuleType
+from typing import Dict
+
+import yaml
 
 
-# TODO: test
 def import_script_module(script_path: str) -> ModuleType:
     """
     Import the script as a module
@@ -17,3 +19,18 @@ def import_script_module(script_path: str) -> ModuleType:
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def read_yaml_file(file_path: str) -> Dict:
+    """
+    Read and parse a YAML file.
+
+    Args:
+        file_path (str): Path to the YAML file.
+
+    Returns:
+        dict: Parsed YAML content as a dictionary.
+    """
+    with open(file_path, "r") as file:
+        yaml_content = yaml.safe_load(file)
+    return yaml_content

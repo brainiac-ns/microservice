@@ -6,22 +6,21 @@ from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 from models.script_data import ScriptData
 from s3_manipulator import S3FileDownloader
-from utils import import_script_module
+from utils import import_script_module, read_yaml_file
 
 logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
 
+CONFIG = read_yaml_file("config/config.yaml")
+
 S3_FILE_DOWNLOADER = S3FileDownloader(
     bucket_name=os.getenv("BUCKET_NAME", default="mlops-task"),
-    local_path=os.getenv("LOCAL_FILES", default="../automated-cicd"),
+    local_folder=CONFIG["script_path"],
 )
 
 
-# TODO: Test integracioni
-# TODO: Koji bi queue ovde koristio?
-# TODO: Nacrtati dijagram kako sve ovo komunicira (cicd + microservice)
 @app.post("/execute_script")
 def execute_script(data: ScriptData) -> dict:
     """
@@ -34,9 +33,11 @@ def execute_script(data: ScriptData) -> dict:
         dict: Output of the script
     """
     try:
-        S3_FILE_DOWNLOADER.download_file(f"scripts/{data.script_name}")
+        S3_FILE_DOWNLOADER.download_file(data.script_name)
 
-        script_module = import_script_module(f"scripts/{data.script_name}")
+        script_module = import_script_module(
+            f"{CONFIG['script_path']}/{data.script_name.split('/')[-1]}"
+        )
 
         output = script_module.run(data.input_data)
         return JSONResponse(

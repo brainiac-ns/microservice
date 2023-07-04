@@ -1,30 +1,30 @@
+import datetime
 import logging
 import os
 
 import boto3
+import pytz
 
 logging.basicConfig(level=logging.INFO)
 
 
-# TODO: Testovi
 class S3FileDownloader:
     """S3 file downloader"""
 
-    def __init__(self, bucket_name: str, local_path: str):
+    def __init__(self, bucket_name: str, local_folder: str):
         """
         Args:
             bucket_name (str): Name of the S3 bucket
-            local_path (str): Local path to download the file
+            local_folder (str): Local folder where the files will be downloaded
         """
         self.bucket_name = bucket_name
-        self.local_path = local_path
+        self.local_folder = local_folder
         self.s3 = boto3.client(
             "s3",
             aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
             aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         )
-        if not os.path.exists("scripts"):
-            os.mkdir("scripts")
+        self.timezone = pytz.timezone("America/New_York")
 
     def download_file(self, s3_key: str):
         """
@@ -33,23 +33,38 @@ class S3FileDownloader:
         Args:
             s3_key (str): Key of the file in S3
         """
-        # TODO: Modifikovati tako da skida fajl samo ukoliko fajl u s3 promenjen u odnosu na lokalni
-        try:
-            self.s3.download_file(self.bucket_name, s3_key, s3_key)
-            logging.info(f"File {s3_key} downloaded from S3")
-        except Exception:
-            self.copy_from_local_path(s3_key)
+        response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix="scripts")
 
-    def copy_from_local_path(self, s3_key: str):
-        """
-        Copy a file from the local path
+        if not os.path.exists(self.local_folder):
+            os.mkdir(self.local_folder)
 
-        Args:
-            s3_key (str): Key of the file in S3
-        """
-        try:
-            logging.info(f"Copying file  {self.local_path}/{s3_key} from local path")
-            os.system(f"cp {self.local_path}/{s3_key} {s3_key}")
-        except Exception as e:
-            logging.exception(e)
-            logging.warn("File does not exist in local path")
+        if "Contents" in response:
+            for obj in response["Contents"]:
+                if s3_key in obj["Key"]:
+                    s3_file_last_modified = obj["LastModified"]
+
+        for file_name in os.listdir(self.local_folder):
+            if s3_key in file_name:
+                file_path = os.path.join(self.local_folder, file_name)
+                last_modified_time = datetime.datetime.fromtimestamp(
+                    os.path.getmtime(file_path)
+                )
+                local_file_last_modified = last_modified_time
+
+        if not local_file_last_modified or local_file_last_modified.astimezone(
+            self.timezone
+        ) < s3_file_last_modified.astimezone(self.timezone):
+            try:
+                self.s3.download_file(
+                    self.bucket_name,
+                    s3_key,
+                    f"{self.local_folder}/{s3_key.split('/')[-1]}",
+                )
+                logging.info(f"File {s3_key} downloaded from S3")
+            except Exception as e:
+                logging.exception(e)
+
+
+if __name__ == "__main__":
+    a = S3FileDownloader(bucket_name="mlops-task", local_folder="data/scripts")
+    a.download_file("script_1.py")
